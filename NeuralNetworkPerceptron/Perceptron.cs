@@ -9,7 +9,7 @@ namespace NeuralNetworkPerceptron
     {
         public double LearningRate { get; set; }
         double bias;
-        double[] weights;
+        public double[] weights;
         ErrorFunction errorFunction;
         ActivationFunction activationFunction;
         Random random;
@@ -69,18 +69,28 @@ namespace NeuralNetworkPerceptron
         public double Train(double[] values, double desired)
         {
             double[] changeValues = new double[weights.Length];
+            double weightsPlusBias = 0;
+            double partialDerivitive = 0;
             for(int i = 0; i < changeValues.Length; i ++)
             {
-                double weightsPlusBias = bias;
+                weightsPlusBias = bias;
                 foreach(double weight in weights)
                 {
                     weightsPlusBias += weight;
                 }
-                double partialDerivitive = errorFunction.Function(Compute(values), desired) * activationFunction.Derivitive(weightsPlusBias) * values[i];
-                changeValues[i] = LearningRate * -partialDerivitive;
+                partialDerivitive = errorFunction.Function(Compute(values), desired) * activationFunction.Derivitive(weightsPlusBias) * values[i];
+                changeValues[i] = -1 * LearningRate * partialDerivitive;
             }
 
-            for(int i = 0; i < changeValues.Length; i ++)
+            weightsPlusBias = bias;
+            foreach (double weight in weights)
+            {
+                weightsPlusBias += weight;
+            }
+            partialDerivitive = errorFunction.Function(Compute(values), desired) * activationFunction.Derivitive(weightsPlusBias) * bias;
+            bias = -1 * LearningRate * partialDerivitive;
+
+            for (int i = 0; i < changeValues.Length; i ++)
             {
                 weights[i] += changeValues[i];
             }

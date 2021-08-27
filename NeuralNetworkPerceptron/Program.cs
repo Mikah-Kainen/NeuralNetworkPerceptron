@@ -9,7 +9,8 @@ namespace NeuralNetworkPerceptron
             ErrorFunction errorFunction = new ErrorFunction((double in1, double in2) => (in1 - in2) * (in1 - in2), (double in1, double in2) => 0);
             Func<double, double> tanH = (double in1) => (Math.Exp(in1) - Math.Exp(-in1)) / (Math.Exp(in1) + Math.Exp(-in1));
             ActivationFunction activationFunction = new ActivationFunction(tanH, (double in1) => 1 - tanH(in1) * tanH(in1));
-            Perceptron perceptron = new Perceptron(3, .01, errorFunction, activationFunction, new Random());
+            ActivationFunction test = new ActivationFunction((double x) => x, (double x) => 1);
+            Perceptron perceptron = new Perceptron(3, .001, errorFunction, activationFunction, new Random());
 
             double[][] inputs = new double[][]
             {
@@ -46,8 +47,9 @@ namespace NeuralNetworkPerceptron
                 Console.WriteLine($"CurrentError: {currentError}");
                 for(int i = 0; i < inputs.Length; i ++)
                 {
+                    perceptron.Train(inputs[i], desired[i]);
                     Console.WriteLine($"Index: {i}");
-                    Console.WriteLine($"\tActual: {perceptron.Train(inputs[i], desired[i])}");
+                    Console.WriteLine($"\tActual: {perceptron.Compute(inputs[i])}");
                     Console.WriteLine($"\tDesired: {desired[i]}");
                 }
             }
