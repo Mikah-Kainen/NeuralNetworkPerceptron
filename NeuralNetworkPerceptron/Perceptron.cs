@@ -8,7 +8,7 @@ namespace NeuralNetworkPerceptron
     public class Perceptron
     {
         public double LearningRate { get; set; }
-        double bias;
+        public double bias;
         public double[] weights;
         ErrorFunction errorFunction;
         ActivationFunction activationFunction;
@@ -35,13 +35,22 @@ namespace NeuralNetworkPerceptron
 
         public double Compute(double[] values)
         {
-            double returnVal = 0;
+            double returnVal = bias;
             for(int i = 0; i < values.Length; i ++)
             {
                 returnVal += values[i] * weights[i];
-            }
-            returnVal += bias;
+            }   
             returnVal = activationFunction.Function(returnVal);
+            return returnVal;
+        }
+
+        private double ComputeNoA(double[] values)
+        {
+            double returnVal = bias;
+            for (int i = 0; i < values.Length; i++)
+            {
+                returnVal += values[i] * weights[i];
+            }
             return returnVal;
         }
 
@@ -66,45 +75,57 @@ namespace NeuralNetworkPerceptron
             return returnValue;
         }
 
-        public double Train(double[] values, double desired)
+        private double[] GetChangeValues(double[] values, double desired)
         {
-            double[] changeValues = new double[weights.Length];
-            double weightsPlusBias = 0;
-            double partialDerivitive = 0;
-            for(int i = 0; i < changeValues.Length; i ++)
+            double[] changeValues = new double[weights.Length + 1];
+            double nonactivatedOut = ComputeNoA(values);
+            double activatedOut = activationFunction.Function(nonactivatedOut);
+
+            double currentError = errorFunction.Derivitive(activatedOut, desired);
+            double currentDerivitive = activationFunction.Derivitive(nonactivatedOut);
+            double partialDerivitive;
+            for (int i = 0; i < values.Length; i++)
             {
-                weightsPlusBias = bias;
-                foreach(double weight in weights)
-                {
-                    weightsPlusBias += weight;
-                }
-                partialDerivitive = errorFunction.Function(Compute(values), desired) * activationFunction.Derivitive(weightsPlusBias) * values[i];
+
+                partialDerivitive = currentError * currentDerivitive * values[i];
                 changeValues[i] = -1 * LearningRate * partialDerivitive;
             }
+            partialDerivitive = currentError * currentDerivitive;
+            changeValues[^1] = -1 * LearningRate * partialDerivitive;
 
-            weightsPlusBias = bias;
-            foreach (double weight in weights)
-            {
-                weightsPlusBias += weight;
-            }
-            partialDerivitive = errorFunction.Function(Compute(values), desired) * activationFunction.Derivitive(weightsPlusBias) * bias;
-            bias = -1 * LearningRate * partialDerivitive;
+            return changeValues;
+        }
 
-            for (int i = 0; i < changeValues.Length; i ++)
+        public double Train(double[] values, double desired)
+        {
+            double[] changeValues = GetChangeValues(values, desired);
+
+            for (int i = 0; i < weights.Length; i ++)
             {
                 weights[i] += changeValues[i];
             }
+            bias += changeValues[^1];
             return errorFunction.Function(Compute(values), desired);
         }
 
-        public double[] Train(double[][] values, double[] desired)
+        public double Train(double[][] values, double[] desired)
         {
-            double[] returnArray = new double[values.Length];
-            for(int i = 0; i < returnArray.Length; i ++)
+            double[][] changeValuesArray = new double[desired.Length][];
+            
+            for(int i = 0; i < desired.Length; i ++)
             {
-                returnArray[i] = Train(values[i], desired[i]);
+                changeValuesArray[i] = GetChangeValues(values[i], desired[i]);
             }
-            return returnArray;
+
+            for(int i = 0; i < changeValuesArray.Length; i ++)
+            {
+                for(int x = 0; x < changeValuesArray[i].Length-1; x ++)
+                {
+                    weights[x] += changeValuesArray[i][x];
+                }
+                bias += changeValuesArray[i][^1];
+            }
+            return GetError(values, desired);
         }
 
     }
